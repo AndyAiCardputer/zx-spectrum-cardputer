@@ -28,8 +28,8 @@ The following games have been thoroughly tested and work perfectly:
 
 | Game | Format | Status |
 |------|--------|--------|
-| **Saboteur** | ---, .TAP, .Z80 | ✅ Works perfectly |
-| **Exolon** |  --- , .TAP, .Z80 | ✅ Works perfectly |
+| **Saboteur** | .---, .TAP, .Z80 | ✅ Works perfectly |
+| **Exolon** | .---, .TAP, .Z80 | ✅ Works perfectly |
 | **Tetris** | .SNA, .TAP, .Z80 | ✅ Works perfectly |
 | **Pac-Man** | .SNA, .TAP, .Z80 | ✅ Works perfectly |
 
@@ -93,7 +93,7 @@ pio run --target upload
 3. Copy your ZX Spectrum game files (.SNA, .TAP, .Z80) into `/ZXgames/`
 4. Insert the SD card into your Cardputer
 
-**Done!** Press `Opt+ESC` to open the menu and load games!
+**Done!** Press `ESC` to open the menu and load games!
 
 ---
 
@@ -109,7 +109,7 @@ pio run --target upload
 | `Backspace` | DELETE (CAPS SHIFT + 0) |
 | `Shift` | CAPS SHIFT |
 | `Fn` | SYMBOL SHIFT |
-| `Opt+ESC` | Open Menu |
+| `ESC` | Open Menu |
 | `TAB` | Pause/Resume game |
 
 ### Hotkeys (Opt + Key)
@@ -123,7 +123,7 @@ pio run --target upload
 | `Opt + M` | Mute/Unmute sound |
 | `Opt + +` | Increase volume |
 | `Opt + -` | Decrease volume |
-| `Opt + I` | Show Information screen |
+| `Opt + ESC` | Reboot emulator |
 
 ### Joystick2 Unit (Optional)
 
@@ -143,7 +143,7 @@ During gameplay (when `Opt+J` is enabled):
 
 ## 📂 File Browser
 
-1. Press `Opt+ESC` to open the Main Menu
+1. Press `ESC` to open the Main Menu
 2. Select `1. Load Game`
 3. Choose file type:
    - `1. Load .SNA` - Instant snapshots
@@ -221,8 +221,9 @@ zx-spectrum-cardputer/
 ## 🙏 Credits
 
 - **Original ESP32 Rainbow project:** [atomic14/esp32-zxspectrum](https://github.com/atomic14/esp32-zxspectrum) by Alvaro Alea Fernandez
+- **For Sound Solution:** [VolosR/M5Mp3](https://github.com/VolosR/M5Mp3)
 - **Z80 CPU core:** Santiago Romero Iglesias
-- **M5Stack Cardputer library & sound examples:** [SeanKwok](https://github.com/SeanKwok) @ M5Stack
+- **M5Stack Cardputer library:** [SeanKwok](https://github.com/SeanKwok) @ M5Stack
 - **Sound system improvements:** ChatGPT (GPT-4)
 - **Port to M5Stack Cardputer:** [AndyAiCardputer](https://github.com/AndyAiCardputer)
 - **Development assistance:** AI Assistant (Claude)
