@@ -1,0 +1,68 @@
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+lib/
+.vscode/
+.clang_complete
+.gcc-flags.json
+
+# Build artifacts
+*.bin
+*.elf
+*.map
+firmware/*.bin
+!firmware/ZX_Spectrum_v420.bin
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+upload.log
+compile_output.log
+
+# Backups
+backups/
+*.bak
+*_backup.*
+BACKUP_*
+
+# Test files
+test/
+tests/
+
+# Documentation drafts
+*.draft.md
+TODO.md
+NOTES.md
+
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+
+# Temporary files
+*.tmp
+temp/
+tmp/
+
+# ROM files (optional - uncomment if you don't want to include ROM in repo)
+# data/48.rom
+# src/spectrum/48k_rom.h
+
