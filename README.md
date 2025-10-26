@@ -109,7 +109,7 @@ pio run --target upload
 | `Backspace` | DELETE (CAPS SHIFT + 0) |
 | `Shift` | CAPS SHIFT |
 | `Fn` | SYMBOL SHIFT |
-| `Opt+ESC` | Open Menu |
+| `ESC` | Open Menu |
 | `TAB` | Pause/Resume game |
 
 ### Hotkeys (Opt + Key)
@@ -123,7 +123,6 @@ pio run --target upload
 | `Opt + M` | Mute/Unmute sound |
 | `Opt + +` | Increase volume |
 | `Opt + -` | Decrease volume |
-| `Opt + I` | Show Information screen |
 
 ### Joystick2 Unit (Optional)
 
