@@ -1,55 +1,55 @@
-# 🚀 ZX SPECTRUM EMULATOR - QUICK START
+# ZX Spectrum Emulator - Quick Start Guide
 
-**Платформа:** M5Stack Cardputer  
-**Версия:** 1.0 (Emulator Core - Working!)  
-**Дата:** 24 октября 2025
+**Platform:** M5Stack Cardputer  
+**Version:** 1.0 (Emulator Core - Working!)  
+**Date:** October 24, 2025
 
 ---
 
-## ✅ ЧТО УЖЕ РАБОТАЕТ:
+## What's Working
 
-- ✅ Z80 CPU эмуляция (3.5 MHz)
+- ✅ Z80 CPU emulation (3.5 MHz)
 - ✅ 16KB ROM (Sinclair 48K)
 - ✅ 48KB RAM
 - ✅ Interrupt Mode 1 (50 Hz)
-- ✅ EI/DI/HALT инструкции
+- ✅ EI/DI/HALT instructions
 - ✅ 50 FPS stable timing
 
-**Статус:** Эмулятор работает, ROM выполняется, INT обрабатываются!
+**Status:** Emulator is running, ROM executes, INTs are handled correctly!
 
 ---
 
-## 📦 ТРЕБОВАНИЯ:
+## Requirements
 
 - **Hardware:** M5Stack Cardputer
 - **Software:** PlatformIO
-- **USB:** Кабель USB-C
+- **USB:** USB-C cable
 
 ---
 
-## 🛠️ УСТАНОВКА:
+## Installation
 
-### 1. Подключите Cardputer к компьютеру
+### 1. Connect Cardputer to Computer
 
-### 2. Соберите проект:
+### 2. Build and Upload:
 ```bash
-cd /Users/a15/Desktop/cardputer/zx_rainbow_cardputer
+cd /path/to/zx_rainbow_cardputer
 pio run --target upload
 ```
 
-### 3. Откройте монитор:
+### 3. Open Serial Monitor:
 ```bash
 pio device monitor --baud 115200
 ```
 
-Или используйте `screen`:
+Or use `screen`:
 ```bash
 screen /dev/cu.usbmodem14401 115200
 ```
 
 ---
 
-## 📊 ОЖИДАЕМЫЙ ВЫВОД:
+## Expected Output
 
 ```
 ========================================
@@ -72,68 +72,68 @@ Z80 IFF1: 0 (should be 0)
 Starting emulation...
 
 🎯 INT #81: PC=0x0E5C→0x0038 IM=1 IFF1=1→0 ✅
-✨ IM=1 обнаружен на frame #81!
+✨ IM=1 detected at frame #81!
 
 FPS: 50.00 | INT: 50.00/s | PC: 0x10B4 | IM: 1 | IFF1: 1 ✅
 ```
 
-**Если видите такой вывод — эмулятор РАБОТАЕТ!** 🎉
+**If you see this output — the emulator is WORKING!** 🎉
 
 ---
 
-## 🔍 ПРОВЕРКА РАБОТОСПОСОБНОСТИ:
+## Verification Checklist
 
-### ✅ Критерии успеха:
+### ✅ Success Criteria:
 
 1. **ROM verified:** `✅ ROM verified: correct ZX Spectrum 48K ROM`
 2. **FPS:** 49.95-50.00
 3. **INT rate:** 49.95-50.00/s
-4. **IM:** 1 (после ~81 frames)
-5. **IFF1:** 1 (в HUD, между прерываниями)
-6. **PC:** меняется (не застревает на 0x0038 или 0x0000)
+4. **IM:** 1 (after ~81 frames)
+5. **IFF1:** 1 (in HUD, between interrupts)
+6. **PC:** changing (not stuck at 0x0038 or 0x0000)
 
-### ❌ Признаки проблем:
+### ❌ Problem Indicators:
 
-- `🔴 FATAL: ROM signature mismatch` → неправильный ROM
-- `PC: 0x0000` постоянно → CPU не выполняется
-- `IM: 0` постоянно → ROM не инициализировался
-- `IFF1: 0` постоянно → EI-delay не работает
+- `🔴 FATAL: ROM signature mismatch` → wrong ROM file
+- `PC: 0x0000` constantly → CPU not executing
+- `IM: 0` constantly → ROM not initialized
+- `IFF1: 0` constantly → EI-delay not working
 
 ---
 
-## 🐛 TROUBLESHOOTING:
+## Troubleshooting
 
-### Проблема: Device not configured
+### Issue: Device not configured
 ```
 Disconnected (read failed: [Errno 6] Device not configured)
 ```
 
-**Решение:**
-1. Нажмите **RESET** на Cardputer
-2. Быстро переподключите монитор
-3. Или используйте `screen` вместо `pio device monitor`
+**Solution:**
+1. Press **RESET** on Cardputer
+2. Quickly reconnect monitor
+3. Or use `screen` instead of `pio device monitor`
 
 ---
 
-### Проблема: Upload failed
+### Issue: Upload failed
 ```
 A fatal error occurred: Failed to connect to ESP32
 ```
 
-**Решение:**
-1. Удерживайте **G0** кнопку при подключении USB
-2. Или нажмите **RESET** во время upload
-3. Проверьте USB кабель (должен поддерживать данные, не только питание)
+**Solution:**
+1. Hold **G0** button while connecting USB
+2. Or press **RESET** during upload
+3. Check USB cable (must support data, not just power)
 
 ---
 
-### Проблема: Compilation failed
+### Issue: Compilation failed
 ```
 fatal error: 48k_rom.h: No such file or directory
 ```
 
-**Решение:**
-Убедитесь что файл `src/spectrum/48k_rom.h` существует и содержит:
+**Solution:**
+Ensure `src/spectrum/48k_rom.h` exists and contains:
 ```cpp
 const unsigned char gb_rom_0_sinclair_48k[]={
 0xF3,0xAF,0x11,0xFF,0xFF,0xC3,0xCB,0x11,...
@@ -141,80 +141,80 @@ const unsigned char gb_rom_0_sinclair_48k[]={
 
 ---
 
-## 📁 СТРУКТУРА ФАЙЛОВ:
+## Project Structure
 
 ```
 zx_rainbow_cardputer/
-├── platformio.ini              # Конфигурация проекта
+├── platformio.ini              # Project configuration
 ├── src/
-│   ├── main.cpp                # Главный файл
+│   ├── main.cpp                # Main entry point
 │   ├── spectrum/
-│   │   ├── spectrum_mini.h     # ZX Spectrum класс
-│   │   ├── spectrum_mini.cpp   # Реализация эмулятора
-│   │   ├── 48k_rom.h           # ROM (16KB)
-│   │   └── memory.h            # Память (ROM+RAM)
+│   │   ├── spectrum_mini.h     # ZX Spectrum class
+│   │   ├── spectrum_mini.cpp   # Emulator implementation
+│   │   ├── 48k_rom.h           # ROM data (16KB)
+│   │   └── memory.h            # Memory management (ROM+RAM)
 │   └── z80/
-│       ├── z80.h               # Z80 регистры
-│       ├── z80.cpp             # Z80 эмуляция
-│       ├── macros.h            # Макросы
-│       └── opcodes.h           # Инструкции Z80
-└── SUCCESS_REPORT_V1.0.md      # Этот документ!
+│       ├── z80.h               # Z80 register definitions
+│       ├── z80.cpp             # Z80 emulation core
+│       ├── macros.h            # Helper macros
+│       └── opcodes.h           # Z80 instruction set
+└── SUCCESS_REPORT_V1.0.md      # Full achievement report
 ```
 
 ---
 
-## 🎯 СЛЕДУЮЩИЕ ШАГИ:
+## Next Steps
 
-После успешного запуска эмулятора:
+After successful emulator startup:
 
-1. **Убрать debug логи** (INT #0-100) → чистый вывод
-2. **Добавить экран** → увидеть VRAM
-3. **Добавить клавиатуру** → вводить команды
-4. **Загрузить игру** → SABOTEUR! 🎮
-
----
-
-## 📚 ДОКУМЕНТАЦИЯ:
-
-- `SUCCESS_REPORT_V1.0.md` - Полный отчёт о достижениях
-- `TECHNICAL_DETAILS.md` - Технические детали реализации
-- `SUMMARY_RU.md` - Резюме проекта (старое)
+1. **Remove debug logs** (INT #0-100) → clean output
+2. **Add display** → see VRAM contents
+3. **Add keyboard** → input commands
+4. **Load a game** → Play SABOTEUR! 🎮
 
 ---
 
-## 💡 ПОЛЕЗНЫЕ КОМАНДЫ:
+## Documentation
 
-### Сборка без загрузки:
+- `SUCCESS_REPORT_V1.0.md` - Full achievement report
+- `TECHNICAL_DETAILS.md` - Technical implementation details
+- `SUMMARY_RU.md` - Legacy project summary (Russian)
+
+---
+
+## Useful Commands
+
+### Build without upload:
 ```bash
 pio run
 ```
 
-### Только загрузка:
+### Upload only:
 ```bash
 pio run --target upload
 ```
 
-### Очистка проекта:
+### Clean project:
 ```bash
 pio run --target clean
 ```
 
-### Логи в файл:
+### Log to file:
 ```bash
 pio device monitor --baud 115200 > logs.txt
 ```
 
 ---
 
-## 🎉 УСПЕХ!
+## Success!
 
-Если вы видите:
+If you see:
 ```
 FPS: 50.00 | INT: 50.00/s | PC: 0x10B4 | IM: 1 | IFF1: 1 ✅
 ```
 
-**ПОЗДРАВЛЯЕМ!** У вас работает ZX Spectrum эмулятор на Cardputer! 🚀
+**CONGRATULATIONS!** You have a working ZX Spectrum emulator on Cardputer! 🚀
 
 ---
 
-**Вопросы?** Проверьте `SUCCESS_REPORT_V1.0.md` для деталей.
+**Questions?** Check `SUCCESS_REPORT_V1.0.md` for details.

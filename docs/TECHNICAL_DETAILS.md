@@ -1,12 +1,12 @@
-# 🔬 ZX SPECTRUM EMULATOR - TECHNICAL DETAILS
+# ZX Spectrum Emulator - Technical Details
 
-**Версия:** 1.0  
-**Дата:** 24 октября 2025  
-**Цель:** Документация технической реализации
+**Version:** 1.0  
+**Date:** October 24, 2025  
+**Purpose:** Technical implementation documentation
 
 ---
 
-## 🏗️ АРХИТЕКТУРА:
+## Architecture Overview
 
 ```
 ┌─────────────────────────────────────────┐
@@ -18,17 +18,17 @@
 │               ▼                          │
 │  ┌──────────────────────────────────┐   │
 │  │  ZXSpectrum::runForFrame()       │   │
-│  │  - Малые кванты (128 t-states)   │   │
-│  │  - Accumulator контроль          │   │
-│  │  - INT генерация (50 Hz)         │   │
+│  │  - Small quanta (128 t-states)   │   │
+│  │  - Accumulator control           │   │
+│  │  - INT generation (50 Hz)        │   │
 │  └────────────┬─────────────────────┘   │
 │               │                          │
 │               ▼                          │
 │  ┌──────────────────────────────────┐   │
 │  │     Z80Run(regs, cycles)         │   │
 │  │  - Fetch/Decode/Execute          │   │
-│  │  - EI-delay применение           │   │
-│  │  - Возврат фактических циклов    │   │
+│  │  - EI-delay handling             │   │
+│  │  - Return actual cycles used     │   │
 │  └────────────┬─────────────────────┘   │
 │               │                          │
 │               ▼                          │
@@ -42,25 +42,25 @@
 
 ---
 
-## ⚙️ КЛЮЧЕВЫЕ КОМПОНЕНТЫ:
+## Key Components
 
-### 1. **Z80 CPU Core** (`z80.cpp`)
+### 1. Z80 CPU Core (`z80.cpp`)
 
-#### Структура регистров:
+#### Register Structure:
 ```cpp
 typedef struct {
-  void *userInfo;              // Pointer to ZXSpectrum
-  eword AF, BC, DE, HL;        // Main registers
-  eword IX, IY, PC, SP, R;     // Index/Special registers
-  eword AFs, BCs, DEs, HLs;    // Shadow registers
-  byte IFF1, IFF2, I, halted;  // Interrupt state
+  void *userInfo;              // Pointer to ZXSpectrum instance
+  eword AF, BC, DE, HL;        // Main register pairs
+  eword IX, IY, PC, SP, R;     // Index and special registers
+  eword AFs, BCs, DEs, HLs;    // Shadow register pairs
+  byte IFF1, IFF2, I, halted;  // Interrupt flags and state
   char IM;                     // Interrupt mode (0/1/2)
-  byte ei_pending;             // ⭐ EI-delay flag
+  byte ei_pending;             // EI-delay flag (critical!)
   int cycles;                  // Cycle counter
 } Z80Regs;
 ```
 
-#### Z80Run() контракт:
+#### Z80Run() Contract:
 ```cpp
 uint16_t Z80Run(Z80Regs *regs, int numcycles) {
   regs->cycles = numcycles;
@@ -72,164 +72,164 @@ uint16_t Z80Run(Z80Regs *regs, int numcycles) {
     // 2. Decode & Execute
     switch (opcode) { ... }
     
-    // 3. ⭐ Apply EI-delay (after instruction!)
+    // 3. Apply EI-delay (after instruction completes!)
     if (regs->ei_pending) {
       regs->IFF1 = regs->IFF2 = 1;
       regs->ei_pending = 0;
     }
     
-    // 4. Subtract cycles
+    // 4. Subtract instruction cycles
     regs->cycles -= instruction_cycles;
   }
   
-  return micValue;  // Total cycles executed
+  return micValue;  // Total cycles actually executed
 }
 ```
 
 ---
 
-### 2. **EI-delay механизм** ⭐
+### 2. EI-Delay Mechanism (Critical!)
 
-**Проблема:** Z80 CPU имеет 1-инструкцию задержку для EI.
+**Problem:** The Z80 CPU has a 1-instruction delay for the EI instruction.
 
-**Пример:**
+**Example:**
 ```asm
-EI      ; IFF1 НЕ устанавливается сразу!
-RET     ; После RET: IFF1=1
-HALT    ; Теперь можно прерывать
+EI      ; IFF1 is NOT set immediately!
+RET     ; After RET executes: IFF1=1
+HALT    ; Now interrupts can occur
 ```
 
-**Реализация:**
+**Implementation:**
 
-#### В `opcodes.h`:
+#### In `opcodes.h`:
 ```cpp
 case EI:
-  r_ei_pending = 1;  // Не устанавливаем IFF1 сразу!
+  r_ei_pending = 1;  // Don't set IFF1 immediately!
   AddCycles(4);
 break;
 ```
 
-#### В `z80.cpp` (конец цикла):
+#### In `z80.cpp` (end of instruction cycle):
 ```cpp
-// После выполнения КАЖДОЙ инструкции
+// After EVERY instruction completes
 if (regs->ei_pending) {
-  regs->IFF1 = regs->IFF2 = 1;  // Теперь можно!
+  regs->IFF1 = regs->IFF2 = 1;  // Now it's safe!
   regs->ei_pending = 0;
 }
 ```
 
-**Почему критично:**  
-Без этого ROM выполняет:
-1. `IM 1` → устанавливает режим прерываний
-2. `EI` → разрешает прерывания (IFF1=1)
-3. INT приходит сразу → прерывает до `HALT`
+**Why This is Critical:**  
+Without EI-delay, the ROM would execute:
+1. `IM 1` → sets interrupt mode
+2. `EI` → enables interrupts (IFF1=1)
+3. INT arrives immediately → interrupts before `HALT`
 4. Infinite loop!
 
-С EI-delay:
-1. `IM 1` → ОК
+With EI-delay:
+1. `IM 1` → OK
 2. `EI` → ei_pending=1
-3. `RET` выполняется → IFF1=1
-4. `HALT` выполняется → ждёт INT
-5. INT приходит → ОК!
+3. `RET` executes → IFF1=1
+4. `HALT` executes → waits for INT
+5. INT arrives → OK!
 
 ---
 
-### 3. **Малые кванты выполнения** ⭐
+### 3. Small Execution Quanta
 
-**Проблема:** 
-- Просим 224 t-states
-- Получаем 226-230 t-states (инструкции не делятся)
-- 312 линий × 2-6 "лишних" = 624-1872/frame
-- За секунду: 31200-93600 "лишних" t-states!
-- Это 0.5-1.3 дополнительных frames!
+**Problem:** 
+- Request 224 t-states
+- Get 226-230 t-states (instructions are atomic)
+- 312 lines × 2-6 "extra" = 624-1872 t-states/frame
+- Per second: 31,200-93,600 "extra" t-states!
+- That's 0.5-1.3 additional frames!
 
-**Решение:**
+**Solution:**
 ```cpp
-const int SLICE_TST = 128;  // Вместо 224!
+const int SLICE_TST = 128;  // Instead of 224!
 
 int targetAdd = TSTATES_PER_FRAME;  // 69888
 while (targetAdd > 0) {
   int budget = min(SLICE_TST, targetAdd);
   int used = Z80Run(regs, budget);
   
-  tstateAccumulator += used;  // Накапливаем ФАКТИЧЕСКИЕ
+  tstateAccumulator += used;  // Accumulate ACTUAL cycles
   targetAdd -= used;
 }
 ```
 
-**Почему работает:**
-- 69888 / 128 = 546 квантов
-- "Перерасход" на квант: 0-10 t-states
-- Максимальный перерасход: 546 × 10 = 5460/frame
-- Это приемлемо! (7.8% вместо 300%+)
+**Why This Works:**
+- 69888 / 128 = 546 quanta
+- "Overshoot" per quantum: 0-10 t-states
+- Maximum overshoot: 546 × 10 = 5460 t-states/frame
+- This is acceptable! (7.8% instead of 300%+)
 
 ---
 
-### 4. **Accumulator & INT генерация** ⭐
+### 4. Accumulator & INT Generation
 
-**Контракт:**
+**Contract:**
 ```cpp
-static int64_t tstateAccumulator = 0;  // Накопитель
+static int64_t tstateAccumulator = 0;  // Accumulator
 
-// После каждого кванта:
+// After each quantum:
 tstateAccumulator += used;
 
-// Генерация INT (может быть несколько за loop!):
+// INT generation (may fire multiple times per loop!):
 while (tstateAccumulator >= 69888) {
   if (IFF1 && IM==1) {
     interrupt();  // JP 0x0038, PUSH PC, IFF1=0
   }
-  tstateAccumulator -= 69888;  // ВСЕГДА вычитаем!
+  tstateAccumulator -= 69888;  // ALWAYS subtract!
   totalFrames++;
 }
 ```
 
-**Ключевые моменты:**
+**Key Points:**
 
-1. **`while` вместо `if`:**  
-   Если накопилось 140000 t-states → 2 INT!
+1. **`while` instead of `if`:**  
+   If 140,000 t-states accumulated → 2 INTs!
 
-2. **Проверка IFF1:**  
-   Если IFF1=0 → прерывание ТЕРЯЕТСЯ (как на реале!)
+2. **Check IFF1:**  
+   If IFF1=0 → interrupt is LOST (like real hardware!)
 
-3. **Всегда вычитаем:**  
-   Даже если IFF1=0, вычитаем frame!
+3. **Always subtract:**  
+   Even if IFF1=0, we subtract the frame!
 
-4. **int64_t тип:**  
-   Защита от переполнения (max ~9 квинтиллионов t-states)
+4. **int64_t type:**  
+   Protection against overflow (~9 quintillion t-states max)
 
 ---
 
-### 5. **HUD Snapshot** (середина кадра)
+### 5. HUD Snapshot (Mid-Frame)
 
-**Проблема:**  
-Если брать PC сразу после INT → всегда 0x0038!
+**Problem:**  
+If we read PC right after INT → always 0x0038!
 
-**Решение:**
+**Solution:**
 ```cpp
-// Глобальные переменные (snapshot)
+// Global variables (snapshot)
 static uint16_t hud_pc = 0;
 static uint8_t hud_iff1 = 0;
 
-// В середине frame (после ~35000 t-states):
+// Mid-frame (after ~35000 t-states):
 if (cyclesExecuted >= MIDFRAME_TSTATES && !snapshotTaken) {
   hud_pc = z80Regs->PC.W;
   hud_iff1 = z80Regs->IFF1;
   snapshotTaken = true;
 }
 
-// В main.cpp:
+// In main.cpp:
 Serial.printf("PC: 0x%04X", spectrum->getHudPC());
 ```
 
-**Результат:**  
-PC показывает "живые" адреса: 0x10B4, 0x0E5C, 0x15E8...
+**Result:**  
+PC displays "live" addresses: 0x10B4, 0x0E5C, 0x15E8...
 
 ---
 
-## 🎯 ZX SPECTRUM 48K TIMING:
+## ZX Spectrum 48K Timing
 
-### Константы:
+### Constants:
 ```cpp
 CPU_FREQ       = 3.5 MHz
 TSTATES_LINE   = 224
@@ -239,7 +239,7 @@ FRAMES_SECOND  = 50     (PAL)
 INT_FREQ       = 50 Hz
 ```
 
-### Frame структура (PAL):
+### Frame Structure (PAL):
 ```
 ┌────────────────────────────────────┐
 │  Top Border      (64 lines)        │  14336 t-states
@@ -256,7 +256,7 @@ INT triggered at start of frame
 
 ---
 
-## 💾 MEMORY MAP:
+## Memory Map
 
 ```
 0x0000 - 0x3FFF  ROM (16KB)       [Read-only]
@@ -267,9 +267,9 @@ INT triggered at start of frame
 0x5CC0 - 0xFFFF  User RAM (~42KB)
 ```
 
-### ROM важные адреса:
+### ROM Important Addresses:
 ```
-0x0000: F3           ; DI (начало ROM)
+0x0000: F3           ; DI (ROM start)
 0x0001: AF           ; XOR A
 0x0038: F5           ; PUSH AF (IM1 vector)
       : E5           ; PUSH HL
@@ -285,13 +285,13 @@ INT triggered at start of frame
 
 ---
 
-## 🔄 INT HANDLER (IM1):
+## INT Handler (IM1)
 
-### Что происходит при INT:
+### What Happens During INT:
 
-1. **Проверка IFF1:**
+1. **Check IFF1:**
    ```cpp
-   if (!regs->IFF1) return;  // INT игнорируется!
+   if (!regs->IFF1) return;  // INT is ignored!
    ```
 
 2. **PUSH PC:**
@@ -308,125 +308,125 @@ INT triggered at start of frame
 
 4. **Disable interrupts:**
    ```cpp
-   IFF1 = 0;  // До EI в handler!
+   IFF1 = 0;  // Until EI in handler!
    ```
 
-5. **Handler выполняется:**
+5. **Handler executes:**
    ```asm
-   0x0038: PUSH AF      ; Сохранить регистры
+   0x0038: PUSH AF      ; Save registers
            PUSH HL
            LD HL,(FRAMES)
-           INC HL       ; Увеличить счётчик кадров
+           INC HL       ; Increment frame counter
            LD (FRAMES),HL
            POP HL
            POP AF
-           EI           ; Разрешить INT (с delay!)
-           RET          ; Вернуться (после RET: IFF1=1)
+           EI           ; Enable INT (with delay!)
+           RET          ; Return (after RET: IFF1=1)
    ```
 
 ---
 
-## 🧪 DEBUGGING:
+## Debugging
 
-### Полезные точки логирования:
+### Useful Logging Points:
 
 ```cpp
-// 1. Проверка ROM
-ROM[0x0000] должен быть 0xF3
-ROM[0x0001] должен быть 0xAF
+// 1. ROM verification
+ROM[0x0000] should be 0xF3
+ROM[0x0001] should be 0xAF
 
 // 2. Z80 state
-PC должен меняться (не 0x0000, не 0x0038 постоянно)
-IM должен стать 1 после ~2 секунд
-IFF1 должен быть 1 между INT
+PC should change (not stuck at 0x0000 or 0x0038)
+IM should become 1 after ~2 seconds
+IFF1 should be 1 between INTs
 
 // 3. Accumulator
-Должен оставаться < 1000 обычно
-Если > 100000 → проблема с циклами!
+Should remain < 1000 normally
+If > 100000 → problem with cycle counting!
 
 // 4. INT rate
-Должно быть 49-51 INT/s
-Если < 45 → слишком медленно
-Если > 55 → слишком быстро
+Should be 49-51 INT/s
+If < 45 → too slow
+If > 55 → too fast
 ```
 
 ---
 
-## ⚠️ COMMON PITFALLS:
+## Common Pitfalls
 
-### 1. EI без delay
+### 1. EI Without Delay
 ```cpp
-// ❌ НЕПРАВИЛЬНО:
+// WRONG:
 case EI:
-  r_IFF1 = r_IFF2 = 1;  // Сразу!
+  r_IFF1 = r_IFF2 = 1;  // Immediately!
   
-// ✅ ПРАВИЛЬНО:
+// CORRECT:
 case EI:
-  r_ei_pending = 1;  // Отложенно!
+  r_ei_pending = 1;  // Deferred!
 ```
 
-### 2. IF вместо WHILE
+### 2. IF Instead of WHILE
 ```cpp
-// ❌ НЕПРАВИЛЬНО:
+// WRONG:
 if (acc >= 69888) {
   interrupt();
   acc -= 69888;
 }
 
-// ✅ ПРАВИЛЬНО:
-while (acc >= 69888) {  // Может быть несколько!
+// CORRECT:
+while (acc >= 69888) {  // May fire multiple times!
   interrupt();
   acc -= 69888;
 }
 ```
 
-### 3. Большие кванты
+### 3. Large Quanta
 ```cpp
-// ❌ НЕПРАВИЛЬНО:
-runForCycles(224);  // Перерасход 2-6 t-states
+// WRONG:
+runForCycles(224);  // Overshoot: 2-6 t-states
 
-// ✅ ПРАВИЛЬНО:
-runForCycles(128);  // Перерасход 0-10, но меньше квантов
+// CORRECT:
+runForCycles(128);  // Overshoot: 0-10, but fewer quanta
 ```
 
-### 4. Не вычитать при IFF1=0
+### 4. Not Subtracting When IFF1=0
 ```cpp
-// ❌ НЕПРАВИЛЬНО:
+// WRONG:
 if (IFF1) {
   interrupt();
   acc -= 69888;
 }
-// Если IFF1=0 → accumulator растёт до бесконечности!
+// If IFF1=0 → accumulator grows to infinity!
 
-// ✅ ПРАВИЛЬНО:
+// CORRECT:
 if (IFF1) interrupt();
-acc -= 69888;  // ВСЕГДА!
+acc -= 69888;  // ALWAYS!
 ```
 
 ---
 
-## 📊 PERFORMANCE:
+## Performance
 
-### Измерения (ESP32-S3 @ 240 MHz):
+### Measurements (ESP32-S3 @ 240 MHz):
 
 ```
 CPU usage:        ~30-40%
 Frame time:       ~12-15ms (target: 20ms)
 Heap free:        ~293KB
-Z80 instructions: ~3500 MHz эквивалент (из-за overhead)
-Actual Z80 freq:  ~3.5 MHz эмулируемая
+Z80 instructions: ~3500 MHz equivalent (due to overhead)
+Actual Z80 freq:  ~3.5 MHz emulated
 ```
 
-### Оптимизации:
+### Optimizations:
 
-1. **Малые кванты** → меньше перерасхода
-2. **Static переменные** → не реаллоцируются
-3. **int64_t accumulator** → защита от overflow
-4. **Callback functions** → гибкость без overhead
+1. **Small quanta** → less overshoot
+2. **Static variables** → no reallocation
+3. **int64_t accumulator** → overflow protection
+4. **Callback functions** → flexibility without overhead
 
 ---
 
-## 🎓 REFERENCES:
+## References
 
 1. **Z80 CPU Manual:**  
    http://www.zilog.com/docs/z80/um0080.pdf
@@ -442,7 +442,7 @@ Actual Z80 freq:  ~3.5 MHz эмулируемая
 
 ---
 
-## 💡 FUTURE IMPROVEMENTS:
+## Future Improvements
 
 1. **Display rendering** (ULA emulation)
 2. **Keyboard input** (port 0xFE)
@@ -454,6 +454,5 @@ Actual Z80 freq:  ~3.5 MHz эмулируемая
 
 ---
 
-**Конец технической документации.**  
-**Для быстрого старта см. `QUICKSTART.md`**
-
+**End of technical documentation.**  
+**For quick start guide, see `QUICKSTART.md`**
