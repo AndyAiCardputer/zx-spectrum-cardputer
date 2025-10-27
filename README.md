@@ -41,24 +41,16 @@ The following games have been thoroughly tested and work perfectly:
 
 <table>
   <tr>
-    <td><img src="screenshots/01_exolon.jpg" alt="Exolon" width="300"/></td>
-    <td><img src="screenshots/02_andy_ai_logo.jpg" alt="Andy+AI Logo" width="300"/></td>
+    <td><img src="screenshots/2025-10-26%2022.19.09.jpg" alt="Game 1" width="300"/></td>
+    <td><img src="screenshots/2025-10-26%2022.19.17.jpg" alt="Game 2" width="300"/></td>
   </tr>
   <tr>
-    <td align="center"><b>Exolon - Run and gun platformer</b></td>
-    <td align="center"><b>Custom splash screen</b></td>
-  </tr>
-  <tr>
-    <td><img src="screenshots/08_saboteur_game.jpg" alt="Saboteur" width="300"/></td>
-    <td><img src="screenshots/05_exolon_large.jpg" alt="Exolon Large" width="300"/></td>
-  </tr>
-  <tr>
-    <td align="center"><b>Saboteur - Ninja stealth action</b></td>
-    <td align="center"><b>Exolon on large display</b></td>
+    <td><img src="screenshots/2025-10-26%2022.37.18.jpg" alt="Game 3" width="300"/></td>
+    <td><img src="screenshots/2025-10-26%2022.37.31.jpg" alt="Game 4" width="300"/></td>
   </tr>
 </table>
 
-*More screenshots in the [screenshots/](screenshots/) folder*
+**See all 25 screenshots in the [screenshots/](screenshots/) folder!**
 
 ---
 
