@@ -4,6 +4,8 @@
 **Status:** ✅ Emulator Running Stable  
 **Platform:** ESP32-S3 (M5Stack Cardputer)
 
+🎥 **[Video Demo on YouTube](https://www.youtube.com/watch?v=AAvEyH9OQ34)** - Watch it in action!
+
 ---
 
 ## Quick Start
